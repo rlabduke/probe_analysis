@@ -137,7 +137,7 @@ CC = 3
 WC = 4
 
 #---Run Probe
-probecommand = 'phenix.probe -quiet -u -condensed -self -mc -nohets -nowaters ALL '+pdbfile
+probecommand = 'phenix.probe -quiet -u -condensed -self -mc -nowaters ALL '+pdbfile
 probe_out = easy_run.fully_buffered(probecommand)
 probefile = probe_out.stdout_lines
 #os.system(probecommand)
