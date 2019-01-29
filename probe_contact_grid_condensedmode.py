@@ -1,8 +1,8 @@
+from __future__ import division
 import os, sys
 try:
   from iotbx import pdb
   from libtbx import easy_run
-  from __future__ import division
 except ImportError:
   sys.stderr.write("This program requires the Phenix environment to run.\n")
   sys.stderr.write("Please source the Phenix environment (phenix/build/setpaths.sh) and try again.\n")
@@ -62,7 +62,11 @@ def make_all_views(chain_indices, chain_ids):
     xcenter = (chain_indices[end_index] + chain_indices[start_index])/2
     ycenter = (chain_indices[end_index] + chain_indices[start_index])/2
     center = center = str(xcenter)+" "+str(ycenter)+" 0"
-    make_one_view(name="chain "+chain_ids[start_index], span=span, center=center, view_num=view_num)
+    if chain_ids[start_index] != 'hets':
+      name = "chain "+chain_ids[start_index]
+    else:
+      name = 'hets'
+    make_one_view(name=name, span=span, center=center, view_num=view_num)
     start_index += 1
     end_index += 1
 
@@ -88,21 +92,38 @@ all_indices = []
 chain_indices = [0]
 chain_ids = []
 
+hets = []
+
 #Each residue gets a unique index that becomes its x/y coordinate
 #Some extra space is left between chains for visual clarity
 for chain in hierarchy.chains():
-  print chain.id, chain.is_protein(), chain.is_na()
-  if not (chain.is_protein() or chain.is_na()): continue
-  for rg in chain.residue_groups():
-    resid = chain.id.strip()+rg.resseq
+  if (chain.is_protein() or chain.is_na()):
+    for rg in chain.residue_groups():
+      resid = chain.id.strip()+rg.resseq
+      indexing[resid] = i
+      all_indices.append(i)
+      i+=1
+    i+=1 # gap between chains
+    chain_indices.append(i)
+    chain_ids.append(chain.id)
+    i+=2
+  else:
+    for rg in chain.residue_groups():
+      for ag in rg.atom_groups():
+        if ag.resname == 'HOH':
+          break
+      else:
+        resid = chain.id.strip()+rg.resseq
+        hets.append(resid)
+if hets:
+  for resid in hets:
     indexing[resid] = i
     all_indices.append(i)
     i+=1
   i+=1 # gap between chains
   chain_indices.append(i)
-  chain_ids.append(chain.id)
+  chain_ids.append('hets')
   i+=2
-
 
 #probe_out = easy_run.fully_buffered(probe_command, stdin_lines=input_str)
 #return probe_out.stdout_lines
